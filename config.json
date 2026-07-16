@@ -1,8 +1,8 @@
 {
-  "nombre_negocio": "Panadería Artesanal",
+  "nombre_negocio": "La Panadería Artesanal",
   "telefono_whatsapp": "584129294955",
   "google_sheet_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpLXZWwRIWWNUUMweDvzqv7XBB-2YE-YhYUhzIm_NZxnpGpcnOKcPKd7i_SYVVXviTLg8-8SD8HKv_/pub?output=csv",
-  "logo_url": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60",
+  "logo_url": "https://i.postimg.cc/YCxMH44w/e2671da7-feb8-49a0-abf5-33f1077d4922.jpg",
   "colores": {
     "primary": "#A0522D",
     "secondary": "#DEB887",
