@@ -9,12 +9,12 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "panaderia-logo.png",
+      "src": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "panaderia-logo.png",
+      "src": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60",
       "sizes": "512x512",
       "type": "image/png"
     }

@@ -1,0 +1,21 @@
+{
+  "nombre_negocio": "Panadería Artesanal",
+  "telefono_whatsapp": "584129294955",
+  "google_sheet_csv": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpLXZWwRIWWNUUMweDvzqv7XBB-2YE-YhYUhzIm_NZxnpGpcnOKcPKd7i_SYVVXviTLg8-8SD8HKv_/pub?output=csv",
+  "logo_url": "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60",
+  "colores": {
+    "primary": "#A0522D",
+    "secondary": "#DEB887",
+    "dark": "#3E2723",
+    "light": "#FAF8F5"
+  },
+  "pagomovil": {
+    "banco": "Banco de Venezuela (0102)",
+    "telefono": "0412-9294955",
+    "cedula": "V-12345678"
+  },
+  "zelle": {
+    "correo": "pagos@panaderiaartesanal.com",
+    "titular": "Juan Carlos Hernández"
+  }
+}

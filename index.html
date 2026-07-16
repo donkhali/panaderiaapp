@@ -3,25 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delivery de Panadería Artesanal</title>
+    <title>Cargando aplicación...</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3E2723">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link type="image/png" rel="icon" href="panaderia-logo.png">
-    <link rel="apple-touch-icon" href="panaderia-logo.png">
+    
+    <!-- Favicons dinámicos que reescribiremos por JS -->
+    <link type="image/png" rel="icon" href="">
+    <link rel="apple-touch-icon" href="">
 
     <style>
+        /* Variables CSS dinámicas */
         :root {
-            --primary: #A0522D; /* Marrón Pan Horneado */
-            --secondary: #DEB887; /* Color Trigo / Dorado */
-            --dark: #3E2723; /* Café / Chocolate Oscuro */
-            --light: #FAF8F5; /* Crema Suave */
+            --primary: #A0522D; 
+            --secondary: #DEB887; 
+            --dark: #3E2723; 
+            --light: #FAF8F5; 
             --green: #2ed573;
             
-            /* Colores temáticos por categoría por defecto */
-            --cat-panes: #A0522D;
+            --cat-panes: var(--primary);
             --cat-dulces: #D2691E;
             --cat-cafeteria: #6F4E37;
             --cat-bebidas: #1e90ff;
@@ -41,6 +43,7 @@
             color: var(--dark);
             padding-bottom: 40px; 
             padding-top: 195px;   
+            transition: background-color 0.3s ease;
         }
 
         /* Cabecera Fija Superior */
@@ -64,16 +67,24 @@
             gap: 15px;
         }
 
+        /* Contenedor circular adaptado para logotipos PNG/JPG */
         .logo-container {
-            font-size: 2.3rem;
-            background: white;
             width: 55px;
             height: 55px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0px 2px 4px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            box-shadow: 0px 2px 4px rgba(0,0,0,0.3);
+            overflow: hidden; /* Recorta la imagen en círculo perfecto */
+            flex-shrink: 0;
+        }
+
+        .logo-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ajusta la imagen cubriendo todo el círculo */
         }
 
         header h1 {
@@ -303,7 +314,7 @@
             flex-shrink: 0;
         }
 
-        /* Botón inicial "+" */
+        /* Botones de acción */
         .btn-add-circle {
             background-color: var(--green);
             color: white;
@@ -325,7 +336,6 @@
             transform: scale(0.85);
         }
 
-        /* Selector dinámico (- 1 +) */
         .quantity-selector {
             display: none;
             align-items: center;
@@ -486,12 +496,15 @@
 </head>
 <body>
 
-    <!-- CONTENEDOR FIJO SUPERIOR -->
+    <!-- CONTENEDOR FIJO SUPERIOR (Identidad Cargada Dinámicamente) -->
     <div class="fixed-header-container">
         <header>
-            <div class="logo-container">🥖</div>
+            <!-- Contenedor circular con tag IMG dinámico de fondo -->
+            <div class="logo-container" id="header-logo-container">
+                <img id="header-logo" src="" alt="Logotipo" style="display: none;">
+            </div>
             <div>
-                <h1>Panadería Artesanal</h1>
+                <h1 id="header-titulo">Cargando...</h1>
                 <div class="status">🟢 Abierto - Horneando Pedidos</div>
             </div>
         </header>
@@ -589,9 +602,9 @@
         <div class="modal-content">
             <h3>💳 Datos para Pago Móvil</h3>
             <div class="modal-details">
-                <p><strong>Banco:</strong> Banco de Venezuela (0102)</p>
-                <p><strong>Teléfono:</strong> 0412-9294955</p>
-                <p><strong>Cédula:</strong> V-12345678</p>
+                <p><strong>Banco:</strong> <span id="modal-pm-banco">Cargando...</span></p>
+                <p><strong>Teléfono:</strong> <span id="modal-pm-telefono">Cargando...</span></p>
+                <p><strong>Cédula:</strong> <span id="modal-pm-cedula">Cargando...</span></p>
                 <p style="font-size: 0.85rem; color: #57606f; margin-top: 10px; font-style: italic;">
                     *Por favor, realice el pago por el monto exacto calculado en Bolívares y copie el número de referencia.
                 </p>
@@ -605,8 +618,8 @@
         <div class="modal-content">
             <h3>🇺🇸 Datos para Pago Zelle</h3>
             <div class="modal-details">
-                <p><strong>Correo:</strong> pagos@panaderiaartesanal.com</p>
-                <p><strong>Titular:</strong> Juan Carlos Hernández</p>
+                <p><strong>Correo:</strong> <span id="modal-zelle-correo">Cargando...</span></p>
+                <p><strong>Titular:</strong> <span id="modal-zelle-titular">Cargando...</span></p>
                 <p style="font-size: 0.85rem; color: #57606f; margin-top: 10px; font-style: italic;">
                     *Por favor, realice la transferencia por el monto exacto en USD e introduzca el correo emisor.
                 </p>
@@ -616,29 +629,25 @@
     </div>
 
     <script>
-        const TELEFONO_NEGOCIO = "584129294955"; 
-
-        const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpLXZWwRIWWNUUMweDvzqv7XBB-2YE-YhYUhzIm_NZxnpGpcnOKcPKd7i_SYVVXviTLg8-8SD8HKv_/pub?output=csv"; 
+        // Variables globales vacías, leídas del JSON
+        let TELEFONO_NEGOCIO = ""; 
+        let GOOGLE_SHEET_CSV_URL = ""; 
+        let CONFIG = {};
 
         // Tasa BCV de respaldo
         let tasaBCV = 727.45; 
 
-        // Inventario de respaldo local
+        // Catálogo local de demostración
         let productos = [
-            { id: 0, categoria: "Panes", nombre: "Pan Canilla (Unidad)", descripcion: "Clásico pan de canilla, crujiente y recién salido del horno.", precio: 1.00, badge: "Fresco", claseBorde: "border-panes", imagen: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60" },
-            { id: 1, categoria: "Panes", nombre: "Pan Campesino", descripcion: "Pan grande de corteza rústica, ideal para rebanar y compartir.", precio: 2.50, badge: "🔥 Más vendido", claseBorde: "border-panes", imagen: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=150&auto=format&fit=crop&q=60" },
-            { id: 2, categoria: "Pastelería", nombre: "Cachito de Jamón", descripcion: "Tradicional cachito venezolano relleno de jamón tierno picadito.", precio: 2.00, badge: "⭐ Especial", claseBorde: "border-dulces", imagen: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=150&auto=format&fit=crop&q=60" },
-            { id: 3, categoria: "Pastelería", nombre: "Golfeado con Queso", descripcion: "Suave golfeado con abundante melao de papelón y queso de mano.", precio: 2.50, badge: "🔥 TOP", claseBorde: "border-dulces", imagen: "https://images.unsplash.com/photo-1517433456452-f9633a875f6f?w=150&auto=format&fit=crop&q=60" },
-            { id: 4, categoria: "Cafetería", nombre: "Café con Leche Grande", descripcion: "Espresso cremoso con la cantidad perfecta de leche espumada.", precio: 1.75, badge: "", claseBorde: "border-cafeteria", imagen: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=150&auto=format&fit=crop&q=60" },
-            { id: 5, categoria: "Bebidas", nombre: "Malta Bien Fría", descripcion: "Malta tradicional venezolana de 355ml.", precio: 1.25, badge: "", claseBorde: "border-bebidas", imagen: "" }
+            { id: 0, categoria: "Panes", nombre: "Pan Canilla (Unidad)", descripcion: "Clásico pan de canilla, crujiente.", precio: 1.00, badge: "Fresco", claseBorde: "border-panes", imagen: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60" }
         ];
 
         let carrito = [];
         let total = 0;
         let terminoBusqueda = ""; 
 
-        window.onload = function() {
-            // REGISTRO LIMPIO Y SEGURO DE LA PWA (Network-First)
+        window.onload = async function() {
+            // Service Worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
                     .then(reg => console.log('Service Worker instalado con éxito', reg))
@@ -651,11 +660,61 @@
             if(localStorage.getItem('delivery_direccion')) {
                 document.getElementById('direccion').value = localStorage.getItem('delivery_direccion');
             }
-            inicializarApp();
-            obtenerTasaBCV(); 
+
+            // Flujo secuencial asíncrono
+            await cargarConfiguracion();
+            await inicializarApp();
+            await obtenerTasaBCV(); 
         };
 
-        // LÓGICA PARA CONSULTAR TASA DEL BCV
+        // LÓGICA DE DETECCIÓN Y LECTURA DEL CONFIG.JSON
+        async function cargarConfiguracion() {
+            try {
+                const response = await fetch('./config.json?t=' + new Date().getTime());
+                CONFIG = await response.json();
+
+                // Seteo de colores CSS
+                document.documentElement.style.setProperty('--primary', CONFIG.colores.primary);
+                document.documentElement.style.setProperty('--secondary', CONFIG.colores.secondary);
+                document.documentElement.style.setProperty('--dark', CONFIG.colores.dark);
+                document.documentElement.style.setProperty('--light', CONFIG.colores.light);
+
+                // Aplicar marca corporativa al HTML
+                document.title = CONFIG.nombre_negocio;
+                document.getElementById('header-titulo').innerText = CONFIG.nombre_negocio;
+
+                // INYECCIÓN DINÁMICA DEL LOGO PNG/JPEG
+                const logoImg = document.getElementById('header-logo');
+                if(CONFIG.logo_url && CONFIG.logo_url.trim() !== "") {
+                    logoImg.src = CONFIG.logo_url;
+                    logoImg.style.display = 'block';
+                    
+                    // Reescribir favicons del navegador dinámicamente
+                    const iconLink = document.querySelector('link[rel="icon"]');
+                    const appleIconLink = document.querySelector('link[rel="apple-touch-icon"]');
+                    if (iconLink) iconLink.setAttribute('href', CONFIG.logo_url);
+                    if (appleIconLink) appleIconLink.setAttribute('href', CONFIG.logo_url);
+                }
+
+                // Sincronizar variables de APIs y Sheets
+                TELEFONO_NEGOCIO = CONFIG.telefono_whatsapp;
+                GOOGLE_SHEET_CSV_URL = CONFIG.google_sheet_csv;
+
+                // Cargar datos a los modales bancarios
+                document.getElementById('modal-pm-banco').innerText = CONFIG.pagomovil.banco;
+                document.getElementById('modal-pm-telefono').innerText = CONFIG.pagomovil.telefono;
+                document.getElementById('modal-pm-cedula').innerText = CONFIG.pagomovil.cedula;
+
+                document.getElementById('modal-zelle-correo').innerText = CONFIG.zelle.correo;
+                document.getElementById('modal-zelle-titular').innerText = CONFIG.zelle.titular;
+
+            } catch (error) {
+                console.error("No se pudo leer el archivo config.json. Usando datos por defecto.", error);
+                TELEFONO_NEGOCIO = "584129294955";
+                GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpLXZWwRIWWNUUMweDvzqv7XBB-2YE-YhYUhzIm_NZxnpGpcnOKcPKd7i_SYVVXviTLg8-8SD8HKv_/pub?output=csv";
+            }
+        }
+
         async function obtenerTasaBCV() {
             try {
                 const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
@@ -663,16 +722,15 @@
                     const data = await response.json();
                     if (data && data.precio) {
                         tasaBCV = parseFloat(data.precio);
-                        console.log("Tasa BCV del día sincronizada:", tasaBCV);
+                        console.log("Tasa BCV sincronizada:", tasaBCV);
                     }
                 }
             } catch (error) {
-                console.warn("No se pudo obtener la tasa BCV en tiempo real, se usará la de respaldo:", tasaBCV);
+                console.warn("Tasa BCV temporalmente indisponible, usando respaldo:", tasaBCV);
             }
             actualizarInterfazCarrito();
         }
 
-        // CONTROLADORES PARA EL CAMBIO DE PAGO, MODAL Y ENFOQUE
         function manejarCambioPago() {
             const selectPago = document.getElementById('pago');
             const referenciaGroup = document.getElementById('referencia-group');
@@ -729,7 +787,7 @@
                     const text = await response.text();
                     productos = parsearCSV(text);
                 } catch (error) {
-                    console.error("Error al conectar con Google Sheets. Usando catálogo por defecto.", error);
+                    console.error("Error al conectar con Google Sheets.", error);
                 }
             }
             renderizarMenuYNav();
@@ -894,7 +952,6 @@
                     <div style="text-align: center; padding: 40px 20px; color: #747d8c;">
                         <span style="font-size: 3rem;">🔍</span>
                         <p style="margin-top: 10px; font-weight: bold;">No encontramos ningún producto que coincida con tu búsqueda.</p>
-                        <p style="font-size: 0.9rem; margin-top: 5px;">Prueba buscando otra palabra o revisa la ortografía.</p>
                     </div>
                 `;
             }
@@ -1034,7 +1091,7 @@
             const pago = document.getElementById('pago').value;
             const notas = document.getElementById('notas').value || "Ninguna";
 
-            let mensaje = `🍞 *NUEVO PEDIDO - PANADERÍA* 🍞\n\n`;
+            let mensaje = `🍞 *NUEVO PEDIDO - ${CONFIG.nombre_negocio ? CONFIG.nombre_negocio.toUpperCase() : 'DELIVERY'}* 🍞\n\n`;
             mensaje += `👤 *Cliente:* ${nombre}\n`;
             mensaje += `📍 *Dirección:* ${direccion}\n`;
             mensaje += `💳 *Método de Pago:* ${pago}\n`;
