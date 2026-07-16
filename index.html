@@ -39,7 +39,7 @@
         body {
             background-color: var(--light);
             color: var(--dark);
-            padding-bottom: 40px; /* Reducido al eliminar la barra inferior */
+            padding-bottom: 40px; 
             padding-top: 195px;   
         }
 
@@ -467,14 +467,10 @@
                     </select>
                 </div>
 
-                <!-- CASILLA DINÁMICA DE CAPTURE -->
-                <div class="form-group" id="capture-group" style="display: none; margin-top: 15px;">
-                    <label for="capture-pago" style="color: var(--primary); font-weight: bold;">📸 Adjuntar Capture / Comprobante de Pago:</label>
-                    <input type="file" id="capture-pago" accept="image/*" onchange="previewCapture(event)">
-                    <div id="capture-preview-container" style="display: none; margin-top: 10px; text-align: center;">
-                        <img id="capture-preview" src="" alt="Vista previa del comprobante" style="max-width: 150px; border-radius: 8px; border: 2px solid var(--secondary);">
-                        <p style="font-size: 0.8rem; color: var(--green); font-weight: bold; margin-top: 5px;">✓ Capture cargado. ¡Recuerda adjuntarlo en WhatsApp!</p>
-                    </div>
+                <!-- CASILLA DINÁMICA DE REFERENCIA (Sustituye al cargador de imagen) -->
+                <div class="form-group" id="referencia-group" style="display: none; margin-top: 15px;">
+                    <label for="referencia-pago" style="color: var(--primary); font-weight: bold;">🔢 Número de Referencia (Últimos 4 o 6 dígitos):</label>
+                    <input type="text" id="referencia-pago" placeholder="Ej. 123456">
                 </div>
 
                 <div class="form-group">
@@ -497,7 +493,7 @@
                 <p><strong>Teléfono:</strong> 0412-9294955</p>
                 <p><strong>Cédula:</strong> V-12345678</p>
                 <p style="font-size: 0.85rem; color: #57606f; margin-top: 10px; font-style: italic;">
-                    *Por favor, realice el pago por el monto exacto calculado en Bolívares y tome una captura del comprobante.
+                    *Por favor, realice el pago por el monto exacto calculado en Bolívares y copie el número de referencia.
                 </p>
             </div>
             <button class="modal-close-btn" onclick="cerrarModalPagoMovil()">Entendido y Copiado</button>
@@ -509,7 +505,7 @@
 
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpLXZWwRIWWNUUMweDvzqv7XBB-2YE-YhYUhzIm_NZxnpGpcnOKcPKd7i_SYVVXviTLg8-8SD8HKv_/pub?output=csv"; 
 
-        // Tasa BCV de respaldo adaptada a 2026
+        // Tasa BCV de respaldo adaptada a la actualidad
         let tasaBCV = 727.45; 
 
         // Inventario de respaldo local con imágenes demostrativas de Unsplash
@@ -569,41 +565,27 @@
             actualizarInterfazCarrito();
         }
 
-        // CONTROLADORES PARA EL CAMBIO DE PAGO Y MODALES
+        // CONTROLADORES PARA EL CAMBIO DE PAGO, MODAL Y ENFOQUE
         function manejarCambioPago() {
             const selectPago = document.getElementById('pago');
-            const captureGroup = document.getElementById('capture-group');
+            const referenciaGroup = document.getElementById('referencia-group');
+            const referenciaInput = document.getElementById('referencia-pago');
             const modalPagoMovil = document.getElementById('modal-pagomovil');
 
             if (selectPago.value === "Pago Móvil") {
                 modalPagoMovil.classList.add('active');
+                referenciaInput.required = true; // Solo es obligatorio para Pago Móvil
             } else {
-                captureGroup.style.display = 'none';
-                document.getElementById('capture-pago').value = ""; // Reseteamos la imagen
-                document.getElementById('capture-preview-container').style.display = 'none';
+                referenciaGroup.style.display = 'none';
+                referenciaInput.required = false;
+                referenciaInput.value = ""; // Reseteamos
             }
         }
 
         function cerrarModalPagoMovil() {
             document.getElementById('modal-pagomovil').classList.remove('active');
-            document.getElementById('capture-group').style.display = 'block';
-        }
-
-        function previewCapture(event) {
-            const input = event.target;
-            const previewContainer = document.getElementById('capture-preview-container');
-            const previewImg = document.getElementById('capture-preview');
-
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    previewContainer.style.display = 'block';
-                }
-                reader.readAsDataURL(input.files[0]);
-            } else {
-                previewContainer.style.display = 'none';
-            }
+            document.getElementById('referencia-group').style.display = 'block';
+            document.getElementById('referencia-pago').focus(); // Posicionamos el cursor automáticamente
         }
 
         async function inicializarApp() {
@@ -819,7 +801,6 @@
             const vacioTxt = document.getElementById('carrito-vacio');
             const totalTxt = document.getElementById('total-pago');
             
-            // CORRECCIÓN: Eliminadas las variables del elemento flotante borrado
             const bcvTotalBox = document.getElementById('total-pago-bcv');
             const bcvTasaInfo = document.getElementById('bcv-tasa-info');
             const totalBsSpan = document.getElementById('total-bs');
@@ -906,13 +887,10 @@
             mensaje += `📍 *Dirección:* ${direccion}\n`;
             mensaje += `💳 *Método de Pago:* ${pago}\n`;
 
+            // Agregar el número de referencia si el método es Pago Móvil
             if (pago === "Pago Móvil") {
-                const inputCapture = document.getElementById('capture-pago');
-                if (inputCapture && inputCapture.files.length > 0) {
-                    mensaje += `📸 *Comprobante:* [ Adjunto a continuación en este chat ]\n`;
-                } else {
-                    mensaje += `📸 *Comprobante:* [ No adjuntado ]\n`;
-                }
+                const refInput = document.getElementById('referencia-pago').value || "No especificada";
+                mensaje += `🔢 *Referencia:* ${refInput}\n`;
             }
 
             mensaje += `📝 *Notas:* ${notas}\n\n`;
@@ -931,10 +909,6 @@
 
             const mensajeCodificado = encodeURIComponent(mensaje);
             const urlWhatsApp = `https://wa.me/${TELEFONO_NEGOCIO}?text=${mensajeCodificado}`;
-            
-            if (pago === "Pago Móvil") {
-                alert("¡Excelente!\n\nSe abrirá WhatsApp para enviar tu pedido. Una vez en el chat de la panadería, no olvides adjuntar tu capture de pago desde tu galería.");
-            }
             
             window.location.replace(urlWhatsApp);
         }
