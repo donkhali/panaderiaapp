@@ -131,6 +131,84 @@
             padding: 0 15px;
         }
 
+        /* Barra de Búsqueda */
+        .search-container {
+            margin: 15px 0 5px 0;
+            position: relative;
+        }
+        .search-container input {
+            width: 100%;
+            padding: 12px 15px 12px 40px;
+            border: 2px solid var(--secondary);
+            border-radius: 25px;
+            font-size: 1rem;
+            background-color: white;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23A0522D' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 15px center;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            color: var(--dark);
+        }
+        .search-container input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(160, 82, 45, 0.15);
+        }
+
+        /* Estilos del Skeleton Loader */
+        #skeleton-loader {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .skeleton-title {
+            width: 150px;
+            height: 24px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            animation: pulse 1.5s infinite ease-in-out;
+            border-left: 5px solid var(--secondary);
+        }
+        .skeleton-card {
+            background: white;
+            display: flex;
+            padding: 12px;
+            border-radius: 12px;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .skeleton-img {
+            width: 75px;
+            height: 75px;
+            background: #e0e0e0;
+            border-radius: 8px;
+        }
+        .skeleton-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .skeleton-line {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 4px;
+        }
+        .skeleton-line.short { width: 40%; }
+        .skeleton-line.medium { width: 60%; }
+        .skeleton-line.long { width: 90%; }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
         /* Títulos de sección con ancla */
         .section-title {
             margin: 30px 0 12px 0;
@@ -141,7 +219,7 @@
             scroll-margin-top: 210px; 
         }
 
-        /* Tarjetas de Menú Modificadas para Imagen */
+        /* Tarjetas de Menú */
         .menu-item {
             background: white;
             display: flex;
@@ -353,7 +431,7 @@
             box-shadow: 0 4px 8px rgba(37, 211, 102, 0.2);
         }
 
-        /* Estilos del Modal de Pago Móvil */
+        /* Estilos de los Modales */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -426,9 +504,25 @@
     <!-- CONTENIDO GENERAL -->
     <div class="container">
         
+        <!-- BARRA DE BÚSQUEDA DINÁMICA -->
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Buscar pan, dulce, café..." oninput="filtrarProductos()">
+        </div>
+        
         <!-- Contenedor Dinámico para los productos -->
         <div id="menu-container">
-            <p style="text-align:center; padding: 20px; color:#747d8c;">Cargando inventario de panadería...</p>
+            <!-- SKELETON LOADER ANIMADO -->
+            <div id="skeleton-loader">
+                <div class="skeleton-title"></div>
+                <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-line short"></div>
+                        <div class="skeleton-line long"></div>
+                        <div class="skeleton-line medium"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- SECCIÓN DEL CARRITO CENTRAL -->
@@ -467,10 +561,16 @@
                     </select>
                 </div>
 
-                <!-- CASILLA DINÁMICA DE REFERENCIA (Sustituye al cargador de imagen) -->
+                <!-- CASILLA DINÁMICA DE REFERENCIA (Pago Móvil) -->
                 <div class="form-group" id="referencia-group" style="display: none; margin-top: 15px;">
                     <label for="referencia-pago" style="color: var(--primary); font-weight: bold;">🔢 Número de Referencia (Últimos 4 o 6 dígitos):</label>
                     <input type="text" id="referencia-pago" placeholder="Ej. 123456">
+                </div>
+
+                <!-- CASILLA DINÁMICA DE ZELLE -->
+                <div class="form-group" id="zelle-group" style="display: none; margin-top: 15px;">
+                    <label for="zelle-pago" style="color: var(--primary); font-weight: bold;">📧 Correo Emisor o Nombre del Titular de Zelle:</label>
+                    <input type="text" id="zelle-pago" placeholder="Ej. juan.perez@email.com / Juan Perez">
                 </div>
 
                 <div class="form-group">
@@ -500,15 +600,30 @@
         </div>
     </div>
 
+    <!-- MODAL DE ZELLE -->
+    <div class="modal-overlay" id="modal-zelle">
+        <div class="modal-content">
+            <h3>🇺🇸 Datos para Pago Zelle</h3>
+            <div class="modal-details">
+                <p><strong>Correo:</strong> pagos@panaderiaartesanal.com</p>
+                <p><strong>Titular:</strong> Juan Carlos Hernández</p>
+                <p style="font-size: 0.85rem; color: #57606f; margin-top: 10px; font-style: italic;">
+                    *Por favor, realice la transferencia por el monto exacto en USD e introduzca el correo emisor.
+                </p>
+            </div>
+            <button class="modal-close-btn" onclick="cerrarModalZelle()">Entendido y Copiado</button>
+        </div>
+    </div>
+
     <script>
         const TELEFONO_NEGOCIO = "584129294955"; 
 
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpLXZWwRIWWNUUMweDvzqv7XBB-2YE-YhYUhzIm_NZxnpGpcnOKcPKd7i_SYVVXviTLg8-8SD8HKv_/pub?output=csv"; 
 
-        // Tasa BCV de respaldo adaptada a la actualidad
+        // Tasa BCV de respaldo
         let tasaBCV = 727.45; 
 
-        // Inventario de respaldo local con imágenes demostrativas de Unsplash
+        // Inventario de respaldo local
         let productos = [
             { id: 0, categoria: "Panes", nombre: "Pan Canilla (Unidad)", descripcion: "Clásico pan de canilla, crujiente y recién salido del horno.", precio: 1.00, badge: "Fresco", claseBorde: "border-panes", imagen: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60" },
             { id: 1, categoria: "Panes", nombre: "Pan Campesino", descripcion: "Pan grande de corteza rústica, ideal para rebanar y compartir.", precio: 2.50, badge: "🔥 Más vendido", claseBorde: "border-panes", imagen: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=150&auto=format&fit=crop&q=60" },
@@ -520,22 +635,14 @@
 
         let carrito = [];
         let total = 0;
+        let terminoBusqueda = ""; 
 
         window.onload = function() {
+            // REGISTRO LIMPIO Y SEGURO DE LA PWA (Network-First)
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                    for(let registration of registrations) {
-                        registration.unregister();
-                        console.log('Service Worker antiguo eliminado forzadamente.');
-                    }
-                });
-            }
-            if ('caches' in window) {
-                caches.keys().then(function(names) {
-                    for (let name of names) {
-                        caches.delete(name);
-                    }
-                });
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker instalado con éxito', reg))
+                    .catch(err => console.error('Error de SW', err));
             }
 
             if(localStorage.getItem('delivery_nombre')) {
@@ -545,7 +652,7 @@
                 document.getElementById('direccion').value = localStorage.getItem('delivery_direccion');
             }
             inicializarApp();
-            obtenerTasaBCV(); // Consultamos el dólar BCV en vivo
+            obtenerTasaBCV(); 
         };
 
         // LÓGICA PARA CONSULTAR TASA DEL BCV
@@ -570,22 +677,48 @@
             const selectPago = document.getElementById('pago');
             const referenciaGroup = document.getElementById('referencia-group');
             const referenciaInput = document.getElementById('referencia-pago');
+            const zelleGroup = document.getElementById('zelle-group');
+            const zelleInput = document.getElementById('zelle-pago');
             const modalPagoMovil = document.getElementById('modal-pagomovil');
+            const modalZelle = document.getElementById('modal-zelle');
 
             if (selectPago.value === "Pago Móvil") {
                 modalPagoMovil.classList.add('active');
-                referenciaInput.required = true; // Solo es obligatorio para Pago Móvil
+                referenciaInput.required = true; 
+                zelleGroup.style.display = 'none';
+                zelleInput.required = false;
+                zelleInput.value = "";
+            } else if (selectPago.value === "Zelle") {
+                modalZelle.classList.add('active');
+                zelleInput.required = true;
+                referenciaGroup.style.display = 'none';
+                referenciaInput.required = false;
+                referenciaInput.value = "";
             } else {
                 referenciaGroup.style.display = 'none';
                 referenciaInput.required = false;
-                referenciaInput.value = ""; // Reseteamos
+                referenciaInput.value = "";
+                zelleGroup.style.display = 'none';
+                zelleInput.required = false;
+                zelleInput.value = "";
             }
         }
 
         function cerrarModalPagoMovil() {
             document.getElementById('modal-pagomovil').classList.remove('active');
             document.getElementById('referencia-group').style.display = 'block';
-            document.getElementById('referencia-pago').focus(); // Posicionamos el cursor automáticamente
+            document.getElementById('referencia-pago').focus(); 
+        }
+
+        function cerrarModalZelle() {
+            document.getElementById('modal-zelle').classList.remove('active');
+            document.getElementById('zelle-group').style.display = 'block';
+            document.getElementById('zelle-pago').focus();
+        }
+
+        function filtrarProductos() {
+            terminoBusqueda = document.getElementById('search-input').value.toLowerCase().trim();
+            renderizarMenuYNav();
         }
 
         async function inicializarApp() {
@@ -705,46 +838,66 @@
                 "Bebidas": "🥤"
             };
 
+            let algunProductoMostrado = false;
+
             categoriesUnicas.forEach(cat => {
                 const idSanitizado = `cat-${cat.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                 const emoji = emojisCat[cat] || "🥖";
                 
-                navContainer.innerHTML += `
-                    <a href="#${idSanitizado}" class="cat-btn"><span>${emoji}</span>${cat}</a>
-                `;
-
-                menuContainer.innerHTML += `<h2 class="section-title" id="${idSanitizado}">${cat}</h2>`;
-
-                const filtrados = productos.filter(p => p.categoria === cat);
-                filtrados.forEach(prod => {
-                    const badgeHTML = prod.badge ? `<span class="badge ${prod.badge.toLowerCase().includes('top') || prod.badge.toLowerCase().includes('vendido') ? 'badge-hot' : 'badge-star'}">${prod.badge}</span>` : '';
+                const filtrados = productos.filter(p => p.categoria === cat && (
+                    p.nombre.toLowerCase().includes(terminoBusqueda) || 
+                    p.descripcion.toLowerCase().includes(terminoBusqueda)
+                ));
+                
+                if (filtrados.length > 0) {
+                    algunProductoMostrado = true;
                     
-                    const imgStyle = prod.imagen ? '' : 'style="display:none;"';
-                    const imgHTML = `<img src="${prod.imagen}" class="item-img" alt="${prod.nombre}" ${imgStyle} onerror="this.style.display='none'">`;
-
-                    menuContainer.innerHTML += `
-                        <div class="menu-item ${prod.claseBorde}">
-                            ${imgHTML}
-                            <div class="item-info">
-                                <div class="item-title-row">
-                                    <h3>${prod.nombre}</h3>
-                                    ${badgeHTML}
-                                </div>
-                                <p>${prod.descripcion}</p>
-                                <span class="price">$${prod.precio.toFixed(2)}</span>
-                            </div>
-                            <div class="item-actions">
-                                <button class="btn-add-circle" id="btn-init-${prod.id}" onclick="modificarDesdeMenu('${prod.nombre}', ${prod.precio}, 'mas', ${prod.id})">+</button>
-                                <div class="quantity-selector" id="selector-${prod.id}">
-                                    <button onclick="modificarDesdeMenu('${prod.nombre}', ${prod.precio}, 'menos', ${prod.id})">-</button>
-                                    <span class="quantity-value" id="val-${prod.id}">1</span>
-                                    <button onclick="modificarDesdeMenu('${prod.nombre}', ${prod.precio}, 'mas', ${prod.id})">+</button>
-                                </div>
-                            </div>
-                        </div>
+                    navContainer.innerHTML += `
+                        <a href="#${idSanitizado}" class="cat-btn"><span>${emoji}</span>${cat}</a>
                     `;
-                });
+
+                    menuContainer.innerHTML += `<h2 class="section-title" id="${idSanitizado}">${cat}</h2>`;
+
+                    filtrados.forEach(prod => {
+                        const badgeHTML = prod.badge ? `<span class="badge ${prod.badge.toLowerCase().includes('top') || prod.badge.toLowerCase().includes('vendido') ? 'badge-hot' : 'badge-star'}">${prod.badge}</span>` : '';
+                        
+                        const imgStyle = prod.imagen ? '' : 'style="display:none;"';
+                        const imgHTML = `<img src="${prod.imagen}" class="item-img" alt="${prod.nombre}" ${imgStyle} loading="lazy" onerror="this.style.display='none'">`;
+
+                        menuContainer.innerHTML += `
+                            <div class="menu-item ${prod.claseBorde}">
+                                ${imgHTML}
+                                <div class="item-info">
+                                    <div class="item-title-row">
+                                        <h3>${prod.nombre}</h3>
+                                        ${badgeHTML}
+                                    </div>
+                                    <p>${prod.descripcion}</p>
+                                    <span class="price">$${prod.precio.toFixed(2)}</span>
+                                </div>
+                                <div class="item-actions">
+                                    <button class="btn-add-circle" id="btn-init-${prod.id}" onclick="modificarDesdeMenu('${prod.nombre}', ${prod.precio}, 'mas', ${prod.id})">+</button>
+                                    <div class="quantity-selector" id="selector-${prod.id}">
+                                        <button onclick="modificarDesdeMenu('${prod.nombre}', ${prod.precio}, 'menos', ${prod.id})">-</button>
+                                        <span class="quantity-value" id="val-${prod.id}">1</span>
+                                        <button onclick="modificarDesdeMenu('${prod.nombre}', ${prod.precio}, 'mas', ${prod.id})">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
             });
+
+            if (!algunProductoMostrado) {
+                menuContainer.innerHTML = `
+                    <div style="text-align: center; padding: 40px 20px; color: #747d8c;">
+                        <span style="font-size: 3rem;">🔍</span>
+                        <p style="margin-top: 10px; font-weight: bold;">No encontramos ningún producto que coincida con tu búsqueda.</p>
+                        <p style="font-size: 0.9rem; margin-top: 5px;">Prueba buscando otra palabra o revisa la ortografía.</p>
+                    </div>
+                `;
+            }
 
             actualizarInterfazCarrito();
         }
@@ -854,7 +1007,6 @@
 
             totalTxt.innerText = total.toFixed(2);
 
-            // CÁLCULO DE CONVERSIÓN BCV EN VIVO CENTRALIZADO EN EL CARRITO
             if (tasaBCV > 0) {
                 const totalBs = total * tasaBCV;
                 if (bcvTotalBox) {
@@ -887,10 +1039,12 @@
             mensaje += `📍 *Dirección:* ${direccion}\n`;
             mensaje += `💳 *Método de Pago:* ${pago}\n`;
 
-            // Agregar el número de referencia si el método es Pago Móvil
             if (pago === "Pago Móvil") {
                 const refInput = document.getElementById('referencia-pago').value || "No especificada";
-                mensaje += `🔢 *Referencia:* ${refInput}\n`;
+                mensaje += `🔢 *Referencia PM:* ${refInput}\n`;
+            } else if (pago === "Zelle") {
+                const zelleInput = document.getElementById('zelle-pago').value || "No especificado";
+                mensaje += `📧 *Emisor Zelle:* ${zelleInput}\n`;
             }
 
             mensaje += `📝 *Notas:* ${notas}\n\n`;
