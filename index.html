@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#3E2723">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="icon" type="image/png" href="panaderia-logo.png">
+    <link type="image/png" rel="icon" href="panaderia-logo.png">
     <link rel="apple-touch-icon" href="panaderia-logo.png">
 
     <style>
@@ -39,7 +39,7 @@
         body {
             background-color: var(--light);
             color: var(--dark);
-            padding-bottom: 100px; 
+            padding-bottom: 40px; /* Reducido al eliminar la barra inferior */
             padding-top: 195px;   
         }
 
@@ -141,22 +141,34 @@
             scroll-margin-top: 210px; 
         }
 
-        /* Tarjetas de Menú */
+        /* Tarjetas de Menú Modificadas para Imagen */
         .menu-item {
             background: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px;
+            padding: 12px;
             margin-bottom: 12px;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             transition: transform 0.1s ease, box-shadow 0.1s ease;
+            gap: 12px;
         }
 
         .menu-item:active {
             transform: scale(0.99);
             box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+
+        /* Miniatura del Producto */
+        .item-img {
+            width: 75px;
+            height: 75px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex-shrink: 0;
+            background-color: #f1f2f6;
+            display: block;
         }
 
         /* Bordes Dinámicos por categoría */
@@ -167,7 +179,7 @@
 
         .item-info {
             flex: 1;
-            padding-right: 15px;
+            padding-right: 5px;
         }
 
         .item-title-row {
@@ -210,6 +222,7 @@
             align-items: center;
             justify-content: center;
             min-width: 45px;
+            flex-shrink: 0;
         }
 
         /* Botón inicial "+" */
@@ -340,43 +353,56 @@
             box-shadow: 0 4px 8px rgba(37, 211, 102, 0.2);
         }
 
-        /* Barra de Carrito Flotante */
-        .floating-cart-bar {
+        /* Estilos del Modal de Pago Móvil */
+        .modal-overlay {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: var(--dark);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-            z-index: 999;
-            transform: translateY(100%);
-            transition: transform 0.3s ease-in-out;
-            cursor: pointer;
-        }
-
-        .floating-cart-bar.active {
-            transform: translateY(0);
-        }
-
-        .floating-info {
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0,0,0,0.6);
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 1.05rem;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
-
-        .floating-btn {
-            background-color: var(--secondary);
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+        }
+        .modal-content h3 {
+            margin-bottom: 15px;
             color: var(--dark);
-            padding: 8px 14px;
+        }
+        .modal-details {
+            background: var(--light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+        .modal-details p {
+            margin-bottom: 8px;
+        }
+        .modal-close-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
             border-radius: 6px;
             font-weight: bold;
-            font-size: 0.9rem;
+            cursor: pointer;
+            width: 100%;
         }
     </style>
 </head>
@@ -410,7 +436,14 @@
             <h2>Tu Pedido</h2>
             <div id="carrito-vacio" style="color: #747d8c; font-style: italic; margin-top:10px;">No has agregado productos aún.</div>
             <div id="lista-carrito"></div>
+            
             <div class="cart-total">Total a pagar: $<span id="total-pago">0.00</span></div>
+            
+            <!-- CONTENEDOR DINÁMICO DE CONVERSIÓN BCV -->
+            <div id="total-pago-bcv" style="text-align: right; margin-top: 8px; font-size: 1.05rem; display: none;">
+                <span style="color: #747d8c; font-size: 0.9rem;" id="bcv-tasa-info">Tasa Oficial BCV: ...</span><br>
+                <strong>Total en Bs: <span id="total-bs">0.00</span> Bs</strong>
+            </div>
         </div>
 
         <!-- FORMULARIO DE DESPACHO -->
@@ -427,12 +460,23 @@
                 </div>
                 <div class="form-group">
                     <label for="pago">Método de Pago:</label>
-                    <select id="pago" required>
+                    <select id="pago" required onchange="manejarCambioPago()">
                         <option value="Efectivo (USD)">Efectivo (USD)</option>
                         <option value="Pago Móvil">Pago Móvil</option>
                         <option value="Zelle">Zelle</option>
                     </select>
                 </div>
+
+                <!-- CASILLA DINÁMICA DE CAPTURE -->
+                <div class="form-group" id="capture-group" style="display: none; margin-top: 15px;">
+                    <label for="capture-pago" style="color: var(--primary); font-weight: bold;">📸 Adjuntar Capture / Comprobante de Pago:</label>
+                    <input type="file" id="capture-pago" accept="image/*" onchange="previewCapture(event)">
+                    <div id="capture-preview-container" style="display: none; margin-top: 10px; text-align: center;">
+                        <img id="capture-preview" src="" alt="Vista previa del comprobante" style="max-width: 150px; border-radius: 8px; border: 2px solid var(--secondary);">
+                        <p style="font-size: 0.8rem; color: var(--green); font-weight: bold; margin-top: 5px;">✓ Capture cargado. ¡Recuerda adjuntarlo en WhatsApp!</p>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label for="notas">Notas Especiales (Opcional):</label>
                     <input type="text" id="notas" placeholder="Ej. Pan bien tostado / Entregar antes de las 5pm">
@@ -444,16 +488,20 @@
 
     </div>
 
-    <!-- BARRA FLOTANTE INFERIOR DEL CARRITO -->
-    <div class="floating-cart-bar" id="barra-flotante" onclick="irAlFormulario()">
-        <div class="floating-info">
-            <span>🛒</span>
-            <div>
-                <strong id="float-cantidad">0 productos</strong>
-                <div style="color: var(--secondary); font-size: 0.9rem; font-weight: bold;">Total: $<span id="float-total">0.00</span></div>
+    <!-- MODAL DE PAGO MÓVIL -->
+    <div class="modal-overlay" id="modal-pagomovil">
+        <div class="modal-content">
+            <h3>💳 Datos para Pago Móvil</h3>
+            <div class="modal-details">
+                <p><strong>Banco:</strong> Banco de Venezuela (0102)</p>
+                <p><strong>Teléfono:</strong> 0412-9294955</p>
+                <p><strong>Cédula:</strong> V-12345678</p>
+                <p style="font-size: 0.85rem; color: #57606f; margin-top: 10px; font-style: italic;">
+                    *Por favor, realice el pago por el monto exacto calculado en Bolívares y tome una captura del comprobante.
+                </p>
             </div>
+            <button class="modal-close-btn" onclick="cerrarModalPagoMovil()">Entendido y Copiado</button>
         </div>
-        <div class="floating-btn">Completar Datos ➔</div>
     </div>
 
     <script>
@@ -461,21 +509,23 @@
 
         const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSpLXZWwRIWWNUUMweDvzqv7XBB-2YE-YhYUhzIm_NZxnpGpcnOKcPKd7i_SYVVXviTLg8-8SD8HKv_/pub?output=csv"; 
 
-        // Inventario local de respaldo
+        // Tasa BCV de respaldo adaptada a 2026
+        let tasaBCV = 727.45; 
+
+        // Inventario de respaldo local con imágenes demostrativas de Unsplash
         let productos = [
-            { id: 0, categoria: "Panes", nombre: "Pan Canilla (Unidad)", descripcion: "Clásico pan de canilla, crujiente y recién salido del horno.", precio: 1.00, badge: "Fresco", claseBorde: "border-panes" },
-            { id: 1, categoria: "Panes", nombre: "Pan Campesino", descripcion: "Pan grande de corteza rústica, ideal para rebanar y compartir.", precio: 2.50, badge: "🔥 Más vendido", claseBorde: "border-panes" },
-            { id: 2, categoria: "Pastelería", nombre: "Cachito de Jamón", descripcion: "Tradicional cachito venezolano relleno de jamón tierno picadito.", precio: 2.00, badge: "⭐ Especial", claseBorde: "border-dulces" },
-            { id: 3, categoria: "Pastelería", nombre: "Golfeado con Queso", descripcion: "Suave golfeado con abundante melao de papelón y queso de mano.", precio: 2.50, badge: "🔥 TOP", claseBorde: "border-dulces" },
-            { id: 4, categoria: "Cafetería", nombre: "Café con Leche Grande", descripcion: "Espresso cremoso con la cantidad perfecta de leche espumada.", precio: 1.75, badge: "", claseBorde: "border-cafeteria" },
-            { id: 5, categoria: "Bebidas", nombre: "Malta Bien Fría", descripcion: "Malta tradicional venezolana de 355ml.", precio: 1.25, badge: "", claseBorde: "border-bebidas" }
+            { id: 0, categoria: "Panes", nombre: "Pan Canilla (Unidad)", descripcion: "Clásico pan de canilla, crujiente y recién salido del horno.", precio: 1.00, badge: "Fresco", claseBorde: "border-panes", imagen: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=150&auto=format&fit=crop&q=60" },
+            { id: 1, categoria: "Panes", nombre: "Pan Campesino", descripcion: "Pan grande de corteza rústica, ideal para rebanar y compartir.", precio: 2.50, badge: "🔥 Más vendido", claseBorde: "border-panes", imagen: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?w=150&auto=format&fit=crop&q=60" },
+            { id: 2, categoria: "Pastelería", nombre: "Cachito de Jamón", descripcion: "Tradicional cachito venezolano relleno de jamón tierno picadito.", precio: 2.00, badge: "⭐ Especial", claseBorde: "border-dulces", imagen: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=150&auto=format&fit=crop&q=60" },
+            { id: 3, categoria: "Pastelería", nombre: "Golfeado con Queso", descripcion: "Suave golfeado con abundante melao de papelón y queso de mano.", precio: 2.50, badge: "🔥 TOP", claseBorde: "border-dulces", imagen: "https://images.unsplash.com/photo-1517433456452-f9633a875f6f?w=150&auto=format&fit=crop&q=60" },
+            { id: 4, categoria: "Cafetería", nombre: "Café con Leche Grande", descripcion: "Espresso cremoso con la cantidad perfecta de leche espumada.", precio: 1.75, badge: "", claseBorde: "border-cafeteria", imagen: "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=150&auto=format&fit=crop&q=60" },
+            { id: 5, categoria: "Bebidas", nombre: "Malta Bien Fría", descripcion: "Malta tradicional venezolana de 355ml.", precio: 1.25, badge: "", claseBorde: "border-bebidas", imagen: "" }
         ];
 
         let carrito = [];
         let total = 0;
 
         window.onload = function() {
-            // SOLUCIÓN AL CACHÉ AGRESIVO: Desinstalar cualquier Service Worker viejo activo inmediatamente
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(function(registrations) {
                     for(let registration of registrations) {
@@ -484,7 +534,6 @@
                     }
                 });
             }
-            // Limpiar los almacenes de caché internos del navegador del cliente
             if ('caches' in window) {
                 caches.keys().then(function(names) {
                     for (let name of names) {
@@ -500,7 +549,62 @@
                 document.getElementById('direccion').value = localStorage.getItem('delivery_direccion');
             }
             inicializarApp();
+            obtenerTasaBCV(); // Consultamos el dólar BCV en vivo
         };
+
+        // LÓGICA PARA CONSULTAR TASA DEL BCV
+        async function obtenerTasaBCV() {
+            try {
+                const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.precio) {
+                        tasaBCV = parseFloat(data.precio);
+                        console.log("Tasa BCV del día sincronizada:", tasaBCV);
+                    }
+                }
+            } catch (error) {
+                console.warn("No se pudo obtener la tasa BCV en tiempo real, se usará la de respaldo:", tasaBCV);
+            }
+            actualizarInterfazCarrito();
+        }
+
+        // CONTROLADORES PARA EL CAMBIO DE PAGO Y MODALES
+        function manejarCambioPago() {
+            const selectPago = document.getElementById('pago');
+            const captureGroup = document.getElementById('capture-group');
+            const modalPagoMovil = document.getElementById('modal-pagomovil');
+
+            if (selectPago.value === "Pago Móvil") {
+                modalPagoMovil.classList.add('active');
+            } else {
+                captureGroup.style.display = 'none';
+                document.getElementById('capture-pago').value = ""; // Reseteamos la imagen
+                document.getElementById('capture-preview-container').style.display = 'none';
+            }
+        }
+
+        function cerrarModalPagoMovil() {
+            document.getElementById('modal-pagomovil').classList.remove('active');
+            document.getElementById('capture-group').style.display = 'block';
+        }
+
+        function previewCapture(event) {
+            const input = event.target;
+            const previewContainer = document.getElementById('capture-preview-container');
+            const previewImg = document.getElementById('capture-preview');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        }
 
         async function inicializarApp() {
             if (GOOGLE_SHEET_CSV_URL && GOOGLE_SHEET_CSV_URL.trim() !== "") {
@@ -517,37 +621,68 @@
         }
 
         function parsearCSV(textoCSV) {
-            const lineas = textoCSV.split("\n");
-            const listaProductos = [];
-            let idCounter = 0;
+            const lineas = [];
+            let filaActual = [];
+            let celdaActual = "";
+            let dentroDeComillas = false;
 
-            if (lineas.length <= 1) return productos;
-
-            const primeraLinea = lineas[0];
+            const primeraLinea = textoCSV.split("\n")[0];
             const conteoComas = (primeraLinea.match(/,/g) || []).length;
             const conteoPuntosYComas = (primeraLinea.match(/;/g) || []).length;
             const separador = conteoPuntosYComas > conteoComas ? ";" : ",";
 
-            for (let i = 1; i < lineas.length; i++) {
-                const linea = lineas[i].trim();
-                if (!linea) continue;
+            for (let i = 0; i < textoCSV.length; i++) {
+                const char = textoCSV[i];
+                const siguienteChar = textoCSV[i + 1];
 
-                let columnas = [];
-                if (separador === ";") {
-                    columnas = linea.split(/;(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                if (char === '"') {
+                    if (dentroDeComillas && siguienteChar === '"') {
+                        celdaActual += '"';
+                        i++; 
+                    } else {
+                        dentroDeComillas = !dentroDeComillas;
+                    }
+                } else if (char === separador && !dentroDeComillas) {
+                    filaActual.push(celdaActual.trim());
+                    celdaActual = "";
+                } else if ((char === '\r' || char === '\n') && !dentroDeComillas) {
+                    if (char === '\r' && siguienteChar === '\n') {
+                        i++;
+                    }
+                    filaActual.push(celdaActual.trim());
+                    if (filaActual.length > 0 && filaActual.some(c => c !== "")) {
+                        lineas.push(filaActual);
+                    }
+                    filaActual = [];
+                    celdaActual = "";
                 } else {
-                    columnas = linea.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    celdaActual += char;
                 }
+            }
+            if (celdaActual !== "" || filaActual.length > 0) {
+                filaActual.push(celdaActual.trim());
+                lineas.push(filaActual);
+            }
 
+            if (lineas.length <= 1) return productos;
+
+            const listaProductos = [];
+            let idCounter = 0;
+
+            for (let i = 1; i < lineas.length; i++) {
+                const columnas = lineas[i];
                 if (columnas.length >= 4) {
-                    const categoria = columnas[0].replace(/"/g, '').trim();
-                    const nombre = columnas[1].replace(/"/g, '').trim();
-                    const descripcion = columnas[2].replace(/"/g, '').trim();
+                    const limpiarComillas = (str) => str.replace(/^"+|"+$/g, '').trim();
+
+                    const categoria = limpiarComillas(columnas[0] || "");
+                    const nombre = limpiarComillas(columnas[1] || "");
+                    const descripcion = limpiarComillas(columnas[2] || "");
                     
-                    const precioTexto = columnas[3].replace(/"/g, '').replace(',', '.').trim();
+                    const precioTexto = limpiarComillas(columnas[3] || "").replace(',', '.');
                     const precio = parseFloat(precioTexto) || 0;
                     
-                    const badge = columnas[4] ? columnas[4].replace(/"/g, '').trim() : "";
+                    const badge = columnas[4] ? limpiarComillas(columnas[4]) : "";
+                    const imagen = columnas[5] ? limpiarComillas(columnas[5]) : "";
 
                     let claseBorde = "border-panes";
                     const catMin = categoria.toLowerCase();
@@ -562,7 +697,8 @@
                         descripcion,
                         precio,
                         badge,
-                        claseBorde
+                        claseBorde,
+                        imagen
                     });
                 }
             }
@@ -601,8 +737,12 @@
                 filtrados.forEach(prod => {
                     const badgeHTML = prod.badge ? `<span class="badge ${prod.badge.toLowerCase().includes('top') || prod.badge.toLowerCase().includes('vendido') ? 'badge-hot' : 'badge-star'}">${prod.badge}</span>` : '';
                     
+                    const imgStyle = prod.imagen ? '' : 'style="display:none;"';
+                    const imgHTML = `<img src="${prod.imagen}" class="item-img" alt="${prod.nombre}" ${imgStyle} onerror="this.style.display='none'">`;
+
                     menuContainer.innerHTML += `
                         <div class="menu-item ${prod.claseBorde}">
+                            ${imgHTML}
                             <div class="item-info">
                                 <div class="item-title-row">
                                     <h3>${prod.nombre}</h3>
@@ -679,10 +819,11 @@
             const vacioTxt = document.getElementById('carrito-vacio');
             const totalTxt = document.getElementById('total-pago');
             
-            const barraFlotante = document.getElementById('barra-flotante');
-            const floatCantidad = document.getElementById('float-cantidad');
-            const floatTotal = document.getElementById('float-total');
-            
+            // CORRECCIÓN: Eliminadas las variables del elemento flotante borrado
+            const bcvTotalBox = document.getElementById('total-pago-bcv');
+            const bcvTasaInfo = document.getElementById('bcv-tasa-info');
+            const totalBsSpan = document.getElementById('total-bs');
+
             if(!listaHTML) return;
 
             listaHTML.innerHTML = '';
@@ -692,7 +833,7 @@
             if (carrito.length === 0) {
                 vacioTxt.style.display = 'block';
                 totalTxt.innerText = '0.00';
-                barraFlotante.classList.remove('active');
+                if (bcvTotalBox) bcvTotalBox.style.display = 'none';
                 
                 productos.forEach(p => {
                     const btnInit = document.getElementById(`btn-init-${p.id}`);
@@ -731,9 +872,16 @@
             });
 
             totalTxt.innerText = total.toFixed(2);
-            floatCantidad.innerText = `${totalUnidades} ${totalUnidades === 1 ? 'producto' : 'productos'}`;
-            floatTotal.innerText = total.toFixed(2);
-            barraFlotante.classList.add('active');
+
+            // CÁLCULO DE CONVERSIÓN BCV EN VIVO CENTRALIZADO EN EL CARRITO
+            if (tasaBCV > 0) {
+                const totalBs = total * tasaBCV;
+                if (bcvTotalBox) {
+                    bcvTotalBox.style.display = 'block';
+                    bcvTasaInfo.innerText = `Tasa Oficial BCV: ${tasaBCV.toFixed(2)} Bs/$`;
+                    totalBsSpan.innerText = totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                }
+            }
         }
 
         function irAlFormulario() {
@@ -757,6 +905,16 @@
             mensaje += `👤 *Cliente:* ${nombre}\n`;
             mensaje += `📍 *Dirección:* ${direccion}\n`;
             mensaje += `💳 *Método de Pago:* ${pago}\n`;
+
+            if (pago === "Pago Móvil") {
+                const inputCapture = document.getElementById('capture-pago');
+                if (inputCapture && inputCapture.files.length > 0) {
+                    mensaje += `📸 *Comprobante:* [ Adjunto a continuación en este chat ]\n`;
+                } else {
+                    mensaje += `📸 *Comprobante:* [ No adjuntado ]\n`;
+                }
+            }
+
             mensaje += `📝 *Notas:* ${notas}\n\n`;
             mensaje += `🛒 *Detalle del Pedido:*\n`;
 
@@ -766,8 +924,17 @@
 
             mensaje += `\n💰 *TOTAL A PAGAR: $${total.toFixed(2)}*`;
 
+            if (tasaBCV > 0) {
+                const totalBs = total * tasaBCV;
+                mensaje += `\n🇻🇪 *Monto en Bs (BCV): ${totalBs.toLocaleString('es-VE', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Bs* (Tasa: ${tasaBCV.toFixed(2)} Bs/$)`;
+            }
+
             const mensajeCodificado = encodeURIComponent(mensaje);
             const urlWhatsApp = `https://wa.me/${TELEFONO_NEGOCIO}?text=${mensajeCodificado}`;
+            
+            if (pago === "Pago Móvil") {
+                alert("¡Excelente!\n\nSe abrirá WhatsApp para enviar tu pedido. Una vez en el chat de la panadería, no olvides adjuntar tu capture de pago desde tu galería.");
+            }
             
             window.location.replace(urlWhatsApp);
         }
